@@ -1,5 +1,6 @@
 import telebot 
 import random 
+import re
  
 token  =  '8081347183:AAHdrE1x-fYE4CTkt8FT71PXyz2Zbhch2_Y' 
 IMAGE_PATH  = 'C:/Users/USER/Downloads/download.png' 
@@ -109,13 +110,39 @@ def dg(message):
     bot.reply_to(message, "🎲 Your random number is: " + str(random.randint(1, 9)) + "\n\n 💭 Maybe this is your destiny... to rise to unimaginable wealth and power 💰👑, or to face a fall so devastating 🌪️📉 that you'll wish you'd never asked. The number I've chosen holds secrets 🔮—secrets that could change everything... or nothing at all. 😨 Are you ready to face it? 🎲") 
  
  
-@bot.message_handler(func=lambda message: True) 
-def handle_message(message): 
-    try: 
-        result = eval(message.text) 
-        bot.reply_to(message, "The result is: " + str(result)) 
-    except Exception: 
-        pass 
+# Regex to detect mathematical expressions like 4x2, 3+5, etc.
+EXPRESSION_PATTERN = re.compile(r'^(\d+)([\+\-\*/x])(\d+)$')
+
+
+@bot.message_handler(commands=['flip'])
+def flip_coin(message):
+    result = random.choice(["Heads", "Tails"])
+    bot.reply_to(message, f"🪙 The coin landed on: {result}")
+    
+    
+@bot.message_handler(commands=['dice'])
+def roll_dice(message):
+    bot.send_dice(message.chat.id)  # Sends a real Telegram dice 🎲
+        
+@bot.message_handler(func=lambda message: True)
+def calculate_expression(message):
+    match = EXPRESSION_PATTERN.match(message.text.replace(" ", ""))  # Remove spaces
+    if match:
+        num1, operator, num2 = match.groups()
+        
+        # Convert numbers to integers
+        num1, num2 = int(num1), int(num2)
+        
+        # Replace 'x' with '*' for multiplication
+        if operator == 'x':
+            operator = '*'
+
+        try:
+            # Evaluate the expression safely
+            result = eval(f"{num1} {operator} {num2}")
+            bot.reply_to(message, f"🧮 Result: {result}")
+        except:
+            pass  # Ignore errors (bot stays silent)
     # bot.reply_to(message, "Sorry, I don't understand that command. Type /help to see what I can do.") 
  
  
